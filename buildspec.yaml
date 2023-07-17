@@ -1,0 +1,69 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - set -e
+      - DEFAULT_PATH=$(pwd)
+      - TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+      - TF_VERSION="1.10.3"
+      - TARGET_ACCOUNT_ID="insert-target-account-id-here"
+      - TARGET_ROLE_NAME="insert-target-role-name-here"
+      - AFT_EXEC_ROLE_ARN=arn:aws:iam::719797195793:role/AWSAFTExecution
+      - AFT_ADMIN_ROLE_NAME="AWSAFTAdmin"
+      - AFT_ADMIN_ROLE_ARN=aarn:aws:iam::719797195793:role/AWSAFTAdmin
+      - ROLE_SESSION_NAME="AWSAFT-Session"
+      - |
+        mkdir -p ~/.ssh
+        echo "Host *" >> ~/.ssh/config
+        echo "StrictHostKeyChecking no" >> ~/.ssh/config
+        echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+        echo "random-ssh-key" > ~/.ssh/ssh_key
+        echo -e "\n\n" >>  ~/.ssh/ssh_key
+        chmod 600 ~/.ssh/ssh_key
+        eval "$(ssh-agent -s)"
+        ssh-add ~/.ssh/ssh_key
+      - AWS_MODULE_GIT_REF="main"
+      - git config --global credential.helper '!aws codecommit credential-helper $@'
+      - git config --global credential.UseHttpPath true
+      - git clone --quiet -b $AWS_MODULE_GIT_REF https://github.com/ronilp1/test.git manualtrigger
+      - chmod +x $DEFAULT_PATH/manualtrigger/sources/scripts/creds.sh
+      - $DEFAULT_PATH/manualtrigger/sources/scripts/creds.sh $TARGET_ACCOUNT_ID
+      - python3 -m venv $DEFAULT_PATH/aft-venv
+      - $DEFAULT_PATH/aft-venv/bin/pip install pip==22.1.2
+      - $DEFAULT_PATH/aft-venv/bin/pip install jinja2-cli==0.7.0 Jinja2==3.0.1 MarkupSafe==2.0.1 boto3==1.18.56 requests==2.26.0
+      - python3 -m venv $DEFAULT_PATH/api-helpers-venv
+      - $DEFAULT_PATH/api-helpers-venv/bin/pip install -r $DEFAULT_PATH/manualtrigger/sources/aft-customizations-repos/aft-global-customizations/api_helpers/requirements.txt
+      - chmod +x $DEFAULT_PATH/manualtrigger/sources/aft-customizations-repos/aft-global-customizations/api_helpers/pre-api-helpers.sh
+      - chmod +x $DEFAULT_PATH/manualtrigger/sources/aft-customizations-repos/aft-global-customizations/api_helpers/post-api-helpers.sh
+
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - source $DEFAULT_PATH/api-helpers-venv/bin/activate
+      - export AWS_PROFILE=aft-target
+      - $DEFAULT_PATH/manualtrigger/sources/aft-customizations-repos/aft-global-customizations/api_helpers/pre-api-helpers.sh
+      - unset AWS_PROFILE
+
+  build:
+    on-failure: CONTINUE
+    commands:
+      - |
+        if [ $TF_DISTRIBUTION = "oss" ]; then
+          cd /tmp
+          echo "Installing Terraform"
+          curl -q -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+          mkdir -p /opt/aft/bin
+          unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip
+          mv terraform /opt/aft/bin
+          /opt/aft/bin/terraform -no-color --version
+          cd $DEFAULT_PATH/manualtrigger/sources/aft-customizations-repos/aft-global-customizations/terraform
+          CREDS=$(aws sts assume-role --role-arn arn:aws:iam::$TARGET_ACCOUNT_ID:role/$TARGET_ROLE_NAME --role-session-name $ROLE_SESSION_NAME --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text)
+          IFS=' ' read -ra ADDR <<< "$CREDS"
+          export AWS_ACCESS_KEY_ID=${ADDR[0]}
+          export AWS_SECRET_ACCESS_KEY=${ADDR[1]}
+          export AWS_SESSION_TOKEN=${ADDR[2]}
+          /opt/aft/bin/terraform init -no-color
+          /opt/aft/bin/terraform apply -no-color --auto-approve
+        else
+          echo "Non-OSS TF_DISTRIBUTION not supported."
