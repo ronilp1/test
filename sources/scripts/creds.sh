@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-TARGET_ACCOUNT_ID=${1}
-
 # Function to write credentials
 function write_to_credentials {
   local profile=${1}
@@ -26,22 +24,17 @@ function assume_role_and_write_credentials {
   local profile_name="${2}"
   
   echo "Assuming role: ${role_arn}"
-  local credentials=$(aws sts assume-role --role-arn "${role_arn}" --role-session-name "${ROLE_SESSION_NAME}")
+  local credentials=$(aws sts assume-role --role-arn "${role_arn}" --role-session-name "CodeBuild-Session")
   
   write_to_credentials "${profile_name}" "${credentials}"
 }
 
-# Check if the TARGET_ACCOUNT_ID variable is set
-if [[ -z "${TARGET_ACCOUNT_ID}" ]]; then
-  echo "TARGET_ACCOUNT_ID is not set. Please provide a target account ID as an argument when running this script."
-  exit 1
-fi
-
 # Variables
 AWS_PARTITION="aws"
-ROLE_SESSION_NAME="AWSAFT-Session"
-AFT_EXECUTION_ROLE="AWSAFTExecution"
-AFT_EXECUTION_ROLE_ARN="arn:${AWS_PARTITION}:iam::${TARGET_ACCOUNT_ID}:role/${AFT_EXECUTION_ROLE}"
+TARGET_ACCOUNT_ID="insert-target-account-id-here" # Replace with your target account ID
+ROLE_SESSION_NAME="CodeBuild-Session"
+TARGET_ROLE_NAME="allow-code-commit-account" # Name of the role created in target account
+TARGET_ROLE_ARN="arn:${AWS_PARTITION}:iam::${TARGET_ACCOUNT_ID}:role/${TARGET_ROLE_NAME}"
 
-# Assume the AFT_EXECUTION_ROLE in the target account and write the credentials
-assume_role_and_write_credentials "${AFT_EXECUTION_ROLE_ARN}" "aft-target"
+# Assume the role in the target account and write the credentials
+assume_role_and_write_credentials "${TARGET_ROLE_ARN}" "codebuild-target"
