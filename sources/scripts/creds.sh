@@ -31,7 +31,7 @@ function assume_role_and_write_credentials {
 
 # Variables
 AWS_PARTITION="aws"
-TARGET_ACCOUNT_ID="insert-target-account-id-here" # Replace with your target account ID
+TARGET_ACCOUNT_ID="502771900580" # Replace with your target account ID
 ROLE_SESSION_NAME="CodeBuild-Session"
 TARGET_ROLE_NAME="allow-code-commit-account" # Name of the role created in target account
 TARGET_ROLE_ARN="arn:${AWS_PARTITION}:iam::${TARGET_ACCOUNT_ID}:role/${TARGET_ROLE_NAME}"
