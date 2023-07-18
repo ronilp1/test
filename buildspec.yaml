@@ -5,8 +5,9 @@ phases:
     commands:
       - set -e
       - DEFAULT_PATH=$(pwd)
+      - TF_DISTRIBUTION="oss"
       - TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-      - TF_VERSION="1.10.3"
+      - TF_VERSION="0.15.5"
       - TARGET_ACCOUNT_ID="502771900580"
       - AFT_EXEC_ROLE_ARN=arn:aws:iam::719797195793:role/AWSAFTExecution
       - AFT_ADMIN_ROLE_NAME="AWSAFTAdmin"
@@ -28,8 +29,7 @@ phases:
     on-failure: ABORT
     commands:
       - source $DEFAULT_PATH/api-helpers-venv/bin/activate
-      - export AWS_PROFILE=aft-target
-      - unset AWS_PROFILE
+      - export AWS_PROFILE=codebuild-target
 
   build:
     on-failure: CONTINUE
@@ -42,14 +42,11 @@ phases:
           mkdir -p /opt/aft/bin
           unzip -q -o terraform_${TF_VERSION}_linux_amd64.zip
           mv terraform /opt/aft/bin
+          chmod +x /opt/aft/bin/terraform
           /opt/aft/bin/terraform -no-color --version
           cd $DEFAULT_PATH/manualtrigger/sources/aft-customizations-repos/aft-global-customizations/terraform
-          CREDS=$(aws sts assume-role --role-arn arn:aws:iam::$TARGET_ACCOUNT_ID:role/$TARGET_ROLE_NAME --role-session-name $ROLE_SESSION_NAME --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text)
-          IFS=' ' read -ra ADDR <<< "$CREDS"
-          export AWS_ACCESS_KEY_ID=${ADDR[0]}
-          export AWS_SECRET_ACCESS_KEY=${ADDR[1]}
-          export AWS_SESSION_TOKEN=${ADDR[2]}
           /opt/aft/bin/terraform init -no-color
           /opt/aft/bin/terraform apply -no-color --auto-approve
         else
           echo "Non-OSS TF_DISTRIBUTION not supported."
+        fi
