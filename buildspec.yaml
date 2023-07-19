@@ -28,7 +28,7 @@ phases:
     on-failure: ABORT
     commands:
       - source $DEFAULT_PATH/api-helpers-venv/bin/activate
-      - export AWS_PROFILE=codebuild-target
+      - IFS=',' read -ra ACCOUNTS <<< "$TARGET_ACCOUNT_IDS"
 
   build:
     on-failure: CONTINUE
@@ -40,6 +40,9 @@ phases:
       - mv terraform /opt/aft/bin
       - chmod +x /opt/aft/bin/terraform
       - /opt/aft/bin/terraform -no-color --version
-      - cd $DEFAULT_PATH/manualtrigger/sources/aft-customizations-repos/aft-global-customizations/terraform
-      - /opt/aft/bin/terraform init -no-color
-      - /opt/aft/bin/terraform apply -no-color --auto-approve
+      - for ACCOUNT_ID in "${ACCOUNTS[@]}"; do
+      -   export AWS_PROFILE=codebuild-target-$ACCOUNT_ID
+      -   cd $DEFAULT_PATH/manualtrigger/sources/aft-customizations-repos/aft-global-customizations/terraform
+      -   /opt/aft/bin/terraform init -no-color
+      -   /opt/aft/bin/terraform apply -no-color --auto-approve
+      - done
