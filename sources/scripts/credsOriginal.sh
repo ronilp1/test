@@ -30,7 +30,7 @@ function assume_role_and_write_credentials {
 }
 
 # Variables
-IFS=',' read -ra ACCOUNTS <<< "${TARGET_ACCOUNT_IDS}"
+IFS=' ' read -r -a ACCOUNTS <<< "$TARGET_ACCOUNT_IDS"
 AWS_PARTITION="aws"
 TARGET_ACCOUNT_ID=${1} # Replace with your target account ID
 ROLE_SESSION_NAME="CodeBuild-Session"
