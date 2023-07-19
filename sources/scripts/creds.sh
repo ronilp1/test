@@ -35,7 +35,8 @@ TARGET_ACCOUNT_IDS=$1 # Receive the target account IDs as an argument
 ROLE_SESSION_NAME="CodeBuild-Session"
 TARGET_ROLE_NAME="allow-code-commit-account" # Name of the role created in target account
 
-IFS=',' read -ra ACCOUNTS <<< "$TARGET_ACCOUNT_IDS"
+#IFS=',' read -ra ACCOUNTS <<< "$TARGET_ACCOUNT_IDS"
+IFS=' ' read -ra ACCOUNTS <<< "$TARGET_ACCOUNT_IDS"
 
 for ACCOUNT_ID in "${ACCOUNTS[@]}"; do
     echo "Processing account: $ACCOUNT_ID"
