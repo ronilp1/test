@@ -2,6 +2,7 @@ provider "aws" {
   region = "ap-southeast-1"
 }
 
-resource "aws_vpc" "main" {
-  cidr_block = "172.16.0.0/20"
+resource "aws_sns_topic" "example" {
+  name         = "example"
+  display_name = "Example Topic"
 }
