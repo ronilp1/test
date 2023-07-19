@@ -3,5 +3,5 @@ provider "aws" {
 }
 
 resource "aws_vpc" "testvpcsecond" {
-  cidr_block = "10.2.0.0/16"
+  cidr_block = "192.168.0.0/16"
 }
