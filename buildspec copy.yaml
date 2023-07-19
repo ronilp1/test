@@ -17,7 +17,7 @@ phases:
       - git config --global credential.UseHttpPath true
       - git clone --quiet -b $AWS_MODULE_GIT_REF https://github.com/ronilp1/test.git manualtrigger
       - chmod +x $DEFAULT_PATH/manualtrigger/sources/scripts/creds.sh
-      - $DEFAULT_PATH/manualtrigger/sources/scripts/creds.sh $TARGET_ACCOUNT_IDS
+      - $DEFAULT_PATH/manualtrigger/sources/scripts/creds.sh $TARGET_ACCOUNT_ID
       - python3 -m venv $DEFAULT_PATH/aft-venv
       - $DEFAULT_PATH/aft-venv/bin/pip install pip==22.1.2
       - $DEFAULT_PATH/aft-venv/bin/pip install jinja2-cli==0.7.0 Jinja2==3.0.1 MarkupSafe==2.0.1 boto3==1.18.56 requests==2.26.0
