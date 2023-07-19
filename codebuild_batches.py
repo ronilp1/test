@@ -8,7 +8,7 @@ account_ids = [
 ]
 
 # Split the account IDs into groups of 10
-account_id_groups = [account_ids[i:i + 2] for i in range(0, len(account_ids), 10)]
+account_id_groups = [account_ids[i:i + 2] for i in range(0, len(account_ids), 2)]
 
 for group in account_id_groups:
     target_account_ids = " ".join(group)
