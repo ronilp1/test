@@ -8,16 +8,13 @@ phases:
       - TF_DISTRIBUTION="oss"
       - TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
       - TF_VERSION="0.15.5"
-      - AFT_EXEC_ROLE_ARN=arn:aws:iam::719797195793:role/AWSAFTExecution
-      - AFT_ADMIN_ROLE_NAME="AWSAFTAdmin"
-      - AFT_ADMIN_ROLE_ARN=aarn:aws:iam::719797195793:role/AWSAFTAdmin
-      - ROLE_SESSION_NAME="AWSAFT-Session"
-      - AWS_MODULE_GIT_REF="main"
+      - AWS_MODULE_GIT_REF="main"  # Update this with your branch name
       - git config --global credential.helper '!aws codecommit credential-helper $@'
       - git config --global credential.UseHttpPath true
       - git clone --quiet -b $AWS_MODULE_GIT_REF https://github.com/ronilp1/test.git manualtrigger
       - chmod +x $DEFAULT_PATH/manualtrigger/sources/scripts/creds.sh
-      - $DEFAULT_PATH/manualtrigger/sources/scripts/creds.sh $TARGET_ACCOUNT_ID
+      - ACCOUNT_ID=$TARGET_ACCOUNT_ID
+      - $DEFAULT_PATH/manualtrigger/sources/scripts/creds.sh $ACCOUNT_ID
       - python3 -m venv $DEFAULT_PATH/aft-venv
       - $DEFAULT_PATH/aft-venv/bin/pip install pip==22.1.2
       - $DEFAULT_PATH/aft-venv/bin/pip install jinja2-cli==0.7.0 Jinja2==3.0.1 MarkupSafe==2.0.1 boto3==1.18.56 requests==2.26.0
@@ -28,7 +25,7 @@ phases:
     on-failure: ABORT
     commands:
       - source $DEFAULT_PATH/api-helpers-venv/bin/activate
-      - export AWS_PROFILE=codebuild-target
+      - export AWS_PROFILE="codebuild-target-${ACCOUNT_ID}"
 
   build:
     on-failure: CONTINUE
